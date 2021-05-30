@@ -1,0 +1,62 @@
+const express = require('express');
+const app = express();
+const mysql = require('mysql');
+const bodyParser = require('body-parser')
+
+app.use(bodyParser.json()) // for parsing application/json
+app.use(bodyParser.text({ type: 'text/html' })) // for parsing application/x-www-form-urlencoded
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
+
+var con = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "mytodo"
+});
+
+con.connect(function(err) {
+    if (err) throw err;
+    console.log("Connected!");
+    con.query("CREATE DATABASE IF NOT EXISTS todo", function (err, result) {
+        if (err) throw err;
+        console.log("Database created");
+    });
+
+    var sql = "CREATE TABLE IF NOT EXISTS todo (deskripsi VARCHAR(255))";
+    con.query(sql, function (err, result) {
+        if (err) throw err;
+        console.log("Table created");
+    });
+});
+
+app.get('/', (req, res) => {
+    res.send(`
+        <html>
+            <body>
+                <form action="/todo" method="post">
+                <input name="deskripsi"/>
+                <button>Add</button>
+            </form>
+            </body>
+        </html>`)
+})
+
+app.post('/todo', urlencodedParser, (req, res) => {
+    var sql = "INSERT INTO todo (deskripsi) VALUES ('" + req.body.deskripsi + "')";
+    con.query(sql)
+    res.end()
+})
+
+app.get('/todo', (req, res) => {
+    var sql = "SELECT deskripsi FROM todo";
+    var data = ""
+    con.query(sql, function (err, result) {
+        result.forEach((item) => {
+            data += `<div>` + item.deskripsi + `</div>`
+        });
+        res.send(data)
+        res.end();
+    })
+})
+
+app.listen(3000)
