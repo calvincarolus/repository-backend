@@ -1,15 +1,18 @@
 const express =  require('express')
 const app = express()
 
-const bparser = require('body-parser')
-app.use(bparser.urlencoded({extended:true}))
+const cors = require('cors')
+app.use(cors())
+
+app.use(express.urlencoded({extended:true}))
+app.use(express.json())
 
 const mysql = require('mysql')
 var con = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "",
-    database: "mytodo" 
+    database: "dbtodo"
 });
 
 
@@ -26,27 +29,30 @@ app.get('/', (req,res) => {
 })
 
 //insert to database
-app.post('/todo',(req,res)=> {
+app.post('/todo',(req,res)=> {  
     con.connect(function(err){
         const kata = req.body.deskripsi
-        con.query("insert into tabel_tugas values(?)", [kata]) 
+        con.query("insert into tabel_todo(deskripsi) values (?)",[kata])
     })
-    res.end()  
+    res.end() 
 })
 
 app.get('/todo', (req ,res) => {
-    con.connect(function(err) {
-        var data =""
-        con.query("SELECT * FROM tabel_tugas", function (err, result) {   
-            result.forEach((dataa) => {
-                data += `<div>` + dataa.deskripsi + `</div>`
-            }); 
-            res.send(data)
+    con.connect(function(err) {     
+        var data ="" 
+        con.query("SELECT * FROM tabel_todo", function (err, result) {
+            console.log({id: result.id})
+            res.json(result)
             res.end()
         });
-    });
+      });
 })
 
-app.listen(3000,function() {
+app.delete('/todo/:id', (req, res)=> {
+    con.query('DELETE FROM tabel_todo WHERE id = ?', [req.params.id]); 
+    res.end()
+})
+
+app.listen(3080,function() {
     console.log("server...")
-})  
+})
